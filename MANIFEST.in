@@ -1,0 +1,14 @@
+include hops/hops_tools/* 
+include hops/pylightcurve41/* 
+include hops/pylightcurve41/analysis/* 
+include hops/pylightcurve41/images/* 
+include hops/pylightcurve41/processes/* 
+include hops/pylightcurve41/models/* 
+include hops/pylightcurve41/plots/* 
+include hops/files/* 
+include hops/hops_tools 
+include hops/__pycache__ 
+include hops/pylightcurve41 
+include hops/files 
+include README.md 
+include LICENSE 
