@@ -6,9 +6,12 @@ include hops/pylightcurve41/processes/*
 include hops/pylightcurve41/models/* 
 include hops/pylightcurve41/plots/* 
 include hops/files/* 
+include hops/thirdparty/* 
+include hops/thirdparty/twirl/* 
 include hops/hops_tools 
 include hops/__pycache__ 
 include hops/pylightcurve41 
 include hops/files 
+include hops/thirdparty 
 include README.md 
 include LICENSE 

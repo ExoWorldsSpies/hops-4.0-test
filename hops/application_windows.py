@@ -838,7 +838,6 @@ class HOPSFitsWindow(HOPSWidget):
         self.black_scale = DoubleVar(widget, value=0)
         self.vmax = DoubleVar(widget, value=65000)
         self.white_scale = DoubleVar(widget, value=1)
-        self.gamma = DoubleVar(widget, value=0)
         self.flip = IntVar(widget, value=0)
         self.mirror = IntVar(widget, value=0)
         self.white_sky = IntVar(widget, value=0)
@@ -872,14 +871,6 @@ class HOPSFitsWindow(HOPSWidget):
         self.white_entry['from_'] = 0
         self.white_entry['to'] = 1
 
-        self.gamma_entry = Scale(control_frame, resolution=0.0001, variable=self.gamma, orient=HORIZONTAL, showvalue=False)
-        self.gamma_entry.bind("<B1-Motion>", self.contrast)
-        self.gamma_entry.bind("<ButtonRelease-1>", self.contrast)
-        self.gamma_entry_label_0 = Label(control_frame, text='Stretch factor = ', anchor=E)
-        self.gamma_entry_label = Label(control_frame, textvar=self.gamma, anchor=W)
-        self.gamma_entry['from_'] = 0
-        self.gamma_entry['to'] = 0.1
-
         self.flip_button = Checkbutton(control_frame, text='Flip', variable=self.flip, command=self.flip_fov)
         self.mirror_button = Checkbutton(control_frame, text='Mirror', variable=self.mirror, command=self.mirror_fov)
         self.reverse_color_button = Checkbutton(control_frame, text='White Sky', variable=self.white_sky, command=self.reverse_color)
@@ -893,9 +884,6 @@ class HOPSFitsWindow(HOPSWidget):
         self.white_entry_label_0.grid(row=5, column=1, columnspan=2)
         self.white_entry_label.grid(row=5, column=3)
         self.white_entry.grid(row=6, column=1, columnspan=4, sticky=N+S+E+W)
-        # self.gamma_entry_label_0.grid(row=7, column=1, columnspan=2)
-        # self.gamma_entry_label.grid(row=7, column=3)
-        # self.gamma_entry.grid(row=8, column=1, columnspan=4, sticky=N+S+E+W)
         self.reset_button.grid(row=9, column=1)
         self.flip_button.grid(row=9, column=2)
         self.mirror_button.grid(row=9, column=3)
@@ -962,7 +950,7 @@ class HOPSFitsWindow(HOPSWidget):
         except:
             self.mean, self.std = plc.mean_std_from_median_mad(fits_data)
 
-        cutoff = max(np.min(self.data), self.mean - 3.0 * self.std)
+        cutoff = max(np.min(self.data), self.mean + self.window.log.frame_low_std * self.std)
 
         self.data = np.maximum(self.data, cutoff)
         self.min = np.min(self.data)
@@ -974,43 +962,25 @@ class HOPSFitsWindow(HOPSWidget):
         self.ax.tick_params(axis='y', rotation=90)
         self.ax.set_xlabel(input_name)
 
-        self.vmin.set(self.mean + self.window.log.frame_low_std * self.std)
-        self.vmax.set(self.mean + self.window.log.frame_upper_std * self.std)
-        self.gamma.set(0)
-
-        if input_options:
-            if input_options[0] != 'auto':
-                self.vmin.set(self.mean + input_options[0] * self.std)
-            if input_options[1] != 'auto':
-                self.vmax.set(self.mean + input_options[1] * self.std)
-            self.gamma.set(input_options[2])
-            self.flip.set(input_options[3])
-            self.mirror.set(input_options[4])
-            self.white_sky.set(input_options[5])
-
-        # xmax = np.max(self.data)
-        # xm = self.mean + self.std
-        # g = xmax / (500 * self.std)
-        # a = 0.5
-        #
-        # xx = (((self.vmin.get() - xm) ** 2) * ((1 - a) ** (2 * g)) / ((xmax - xm) ** 2)) ** (1 / (2 * g))
-        # sign = -1 if self.vmin.get() < xm else 1
-        # self.black_scale.set(a + sign * xx)
-        #
-        # xx = (((self.vmax.get() - xm) ** 2) * ((1 - a) ** (2 * g)) / ((xmax - xm) ** 2)) ** (1 / (2 * g))
-        # sign = -1 if self.vmax.get() < xm else 1
-        # self.white_scale.set(a + sign * xx)
-        #
-        # xx = (((self.min -        xm) ** 2) * ((1 - a) ** (2 * g)) / ((xmax - xm) ** 2)) ** (1 / (2 * g))
-        # sign = -1 if self.min < xm else 1
-        # self.black_entry['from_'] = round(a + sign*xx, 4)
-        # self.white_entry['from_'] = round(a + sign*xx, 4)
-
+        self.vmin.set(round(self.mean + self.window.log.frame_low_std * self.std, 2))
+        self.vmax.set(round(self.mean + self.window.log.frame_upper_std * self.std, 2))
         self.black_entry['from_'] = round(self.mean + self.window.log.frame_low_std * self.std, 2)
         self.black_entry['to_'] = round(self.mean + self.window.log.frame_upper_std * self.std, 2)
         self.white_entry['from_'] = round(self.mean + self.window.log.frame_low_std * self.std, 2)
         self.white_entry['to_'] = round(self.mean + self.window.log.frame_upper_std * self.std, 2)
 
+        if input_options:
+            if input_options[0] != 'auto':
+                self.vmin.set(round(self.mean + input_options[0] * self.std, 2))
+            if input_options[1] != 'auto':
+                self.vmax.set(round(self.mean + input_options[1] * self.std, 2))
+
+            self.flip.set(input_options[3])
+            self.mirror.set(input_options[4])
+            self.white_sky.set(input_options[5])
+
+        self.black_scale.set(self.vmin.get())
+        self.white_scale.set(self.vmax.get())
 
         if self.show_half:
             xl = len(self.data[0])
@@ -1079,33 +1049,17 @@ class HOPSFitsWindow(HOPSWidget):
         if self.black_scale.get() >= self.white_scale.get():
             self.black_scale.set(0.9 * self.white_scale.get())
 
-        # xmax = np.max(self.data)
-        # xm = self.mean + self.std
-        # g = xmax / (500 * self.std)
-        # a = 0.5
-        #
-        # sign = -1 if self.black_scale.get() < a else 1
-        # self.vmin.set(sign * (((1 - a) ** (-g)) * (xmax - xm)) * ((sign * (self.black_scale.get() - a)) ** g) + xm)
-        # sign = -1 if self.white_scale.get() < a else 1
-        # self.vmax.set(sign * (((1 - a) ** (-g)) * (xmax - xm)) * ((sign * (self.white_scale.get() - a)) ** g) + xm)
-        #
-        # self.image.set_clim(
-        #     self.vmin.get() ** (10 ** -self.gamma.get()),
-        #     self.vmax.get() ** (10 ** -self.gamma.get())
-        # )
+        self.vmin.set(round(self.black_scale.get(), 2))
+        self.vmax.set(round(self.white_scale.get(), 2))
 
-        self.image.set_clim(
-            self.vmin.get(),
-            self.vmax.get()
-        )
-
+        self.image.set_clim(self.black_scale.get(), self.white_scale.get())
 
         self.canvas.draw()
 
     def get_fov_options(self):
         try:
             return [(self.vmin.get() - self.mean)/self.std, (self.vmax.get() - self.mean)/self.std,
-                    self.gamma.get(), self.flip.get(), self.mirror.get(), self.white_sky.get(),
+                    0, self.flip.get(), self.mirror.get(), self.white_sky.get(),
                     int(self.ax.get_xlim()[0]), int(self.ax.get_xlim()[1]),
                     int(self.ax.get_ylim()[0]), int(self.ax.get_ylim()[1])]
         except:
@@ -1226,21 +1180,10 @@ class HOPSFitsWindow(HOPSWidget):
         self.vmin.set(self.mean + self.window.log.frame_low_std * self.std)
         self.vmax.set(self.mean + self.window.log.frame_upper_std * self.std)
 
-        xmax = np.max(self.data)
-        xm = self.mean + self.std
-        g = xmax / (500 * self.std)
-        a = 0.5
+        self.black_scale.set(self.vmin.get())
+        self.white_scale.set(self.vmax.get())
 
-        xx = (((self.vmin.get() - xm) ** 2) * ((1 - a) ** (2 * g)) / ((xmax - xm) ** 2)) ** (1 / (2 * g))
-        sign = -1 if self.vmin.get() < xm else 1
-        self.black_scale.set(a + sign * xx)
-        xx = (((self.vmax.get() - xm) ** 2) * ((1 - a) ** (2 * g)) / ((xmax - xm) ** 2)) ** (1 / (2 * g))
-        sign = -1 if self.vmax.get() < xm else 1
-        self.white_scale.set(a + sign * xx)
-
-        self.gamma.set(0)
-
-        self.image.set_clim(self.vmin.get() ** (10 ** -self.gamma.get()), self.vmax.get() ** (10 ** -self.gamma.get()))
+        self.image.set_clim(self.vmin.get(), self.vmax.get())
         self.draw()
 
     def draw(self, update_level=1):
