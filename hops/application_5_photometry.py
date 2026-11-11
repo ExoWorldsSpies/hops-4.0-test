@@ -9,13 +9,11 @@ import matplotlib
 import webbrowser
 import matplotlib.patches as mpatches
 import matplotlib.gridspec as gridspec
-from IPython.core.pylabtools import figsize
-from astropy.coordinates import SkyCoord
-from astropy.time import Time as astrotime
-from photutils.aperture import CircularAperture, aperture_photometry
 
-from tkinter import PhotoImage
+from astropy.time import Time as astrotime
 from matplotlib.cm import Greys, Greys_r
+from photutils.aperture import CircularAperture, aperture_photometry
+from astropy.coordinates import SkyCoord
 
 from hops.application_windows import MainWindow, AddOnWindow
 from hops.hops_tools.files import get_fits_data_and_header, open_dict, save_dict
@@ -130,12 +128,10 @@ class PhotometryWindow(MainWindow):
                 [self.advanced_settings_window.Label(text='Saturation limit, relatively to the full-well depth'), 0],
                 [self.saturation, 1],
                 [self.advanced_settings_window.Label(text='(default = 0.95)'), 2]],
-            [],
             [
                 [self.advanced_settings_window.Label(text='Star FWHM in arcseconds (approximate)'), 0],
                 [self.star_size_arcsec, 1],
                 [self.advanced_settings_window.Label(text='(default = 4.0)'), 2]],
-            [],
             [
                 [self.advanced_settings_window.Label(text='Camera gain in e/ADU'), 0],
                 [self.camera_gain, 1],
@@ -677,7 +673,7 @@ class PhotometryWindow(MainWindow):
 
                 star = self.set_target(event.xdata, event.ydata, self.targets_indication.get())
 
-                if star == 'no detection':
+                if star == 'no_detection':
                     self.showinfo('Star not acceptable.', 'Star could not be located or it includes pixels above the saturation limit.')
                     return None
 
@@ -955,10 +951,24 @@ class PhotometryWindow(MainWindow):
 
     def openweb_simbad(self):
 
-        radec_string = self.log.get_param('target_ra_dec').replace('+', '%2B').replace(' ', '+')
-        webbrowser.open("http://simbad.u-strasbg.fr/simbad/sim-coo?Coord={0}&CooFrame=ICRS&"
-                        "CooEpoch=2000&CooEqui=2000&CooDefinedFrames=none&Radius=20&"
-                        "Radius.unit=arcmin&submit=submit+query&CoordList=".format(radec_string), new=1)
+        _ = exoclock.simbad_search_by_name('M27')
+
+        status = exoclock.get_simbad_status()
+
+        if 'Connected to ' in status:
+            server = status.replace('Connected to ', '')
+
+            radec_string = self.log.get_param('target_ra_dec').replace('+', '%2B').replace(' ', '+')
+            webbrowser.open("http://{0}/simbad/sim-coo?Coord={1}&CooFrame=ICRS&"
+                            "CooEpoch=2000&CooEqui=2000&CooDefinedFrames=none&Radius=20&"
+                            "Radius.unit=arcmin&submit=submit+query&CoordList=".format(
+                server, radec_string), new=1
+            )
+
+        else:
+
+            self.showinfo('Simbad not connected failed',
+                          'Could not connect to Simbad.')
 
     def plate_solve_first_local(self):
 
@@ -1062,7 +1072,9 @@ class PhotometryWindow(MainWindow):
 
         self.log.set_param('show_good_comparisons', self.show_good_comparisons.get())
         self.log.set_param('show_good_comparisons_percent', self.show_good_comparisons_percent.get())
-        self.log.set_param('show_good_comparisons_percent', self.show_good_comparisons_percent.get())
+        self.log.set_param('show_good_comparisons_colour', self.show_good_comparisons_colour.get())
+        self.log.set_param('show_good_comparisons_colour_offset', self.show_good_comparisons_colour_offset.get())
+        self.log.set_param('show_good_comparisons_boxsize', self.show_good_comparisons_boxsize.get())
         self.log.set_param('sky_inner_aperture', self.sky_inner_aperture.get())
         self.log.set_param('sky_outer_aperture', self.sky_outer_aperture.get())
         self.log.set_param('star_size_arcsec', self.star_size_arcsec.get())

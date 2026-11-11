@@ -534,7 +534,7 @@ class ReductionWindow(MainWindow):
 
     def stack(self):
         if self.exit:
-            self.after(self.save)
+            self.after(self.proceed)
 
         else:
 
@@ -565,7 +565,7 @@ class ReductionWindow(MainWindow):
                 for f in self.all_frames:
 
                     if self.exit:
-                        self.after(self.save)
+                        self.after(self.proceed)
 
                     else:
 
@@ -608,7 +608,7 @@ class ReductionWindow(MainWindow):
                 for idx, meta in enumerate(file_metadata):
 
                     if self.exit:
-                        self.after(self.save)
+                        self.after(self.proceed)
 
                     else:
 
@@ -743,7 +743,7 @@ class ReductionWindow(MainWindow):
                         self.update()
 
                 if self.exit:
-                    self.after(self.save)
+                    self.after(self.proceed)
 
                 else:
 
@@ -791,16 +791,16 @@ class ReductionWindow(MainWindow):
                                   f'Reduction and stacking completed successfully!\n\n'
                                   f'Created {len(stacked_files)} stacked frames.')
 
-                    self.after(self.save)
+                    self.after(self.proceed)
 
             else:
                 self.log.set_param('stacking_complete', True)
                 self.log.save_local_log()
 
-                self.after(self.save)
+                self.after(self.proceed)
 
 
-    def save(self):
+    def proceed(self):
 
         if self.exit:
             self.close()

@@ -50,6 +50,10 @@ filter_translations = {
 
 __location__ = os.path.abspath(os.path.dirname(__file__))
 
+try:
+    _ = exoclock.simbad_search_by_name('M27')
+except:
+    _ = exoclock.simbad_search_by_name('M27')
 
 class DataTargetWindow(MainWindow):
 
@@ -220,6 +224,8 @@ class DataTargetWindow(MainWindow):
 
         # target window
 
+        self.simbad_status = self.target_window.Label(text=exoclock.get_simbad_status())
+
         self.target_ra_dec_choice = self.target_window.IntVar(self.log.get_param('target_ra_dec_choice'))
         self.target_ra_dec_choice_0 = self.target_window.Radiobutton(
             text='Use the RA/DEC found in the file\'s header:',
@@ -232,15 +238,25 @@ class DataTargetWindow(MainWindow):
             variable=self.target_ra_dec_choice, value=2, command=self.update_ra_dec)
         self.auto_target_ra_dec = self.target_window.Label(text=self.log.get_param('auto_target_ra_dec'))
         self.auto_target_ra_dec_check = self.target_window.Label(text='')
-        self.simbad_target_name = self.target_window.Entry(value=self.log.get_param('simbad_target_name'), commands=[self.update_ra_dec])
+        self.simbad_target_name = self.target_window.Entry(
+            value=self.log.get_param('simbad_target_name'), commands=[self.update_ra_dec]
+        )
         self.simbad_target_name_check = self.target_window.Label(text='')
-        self.manual_target_ra_dec = self.target_window.Entry(value=self.log.get_param('manual_target_ra_dec'), commands=[self.update_ra_dec])
+        self.manual_target_ra_dec = self.target_window.Entry(
+            value=self.log.get_param('manual_target_ra_dec'), commands=[self.update_ra_dec]
+        )
         self.target_ra_dec_2 = self.target_window.Label(text=self.log.get_param('target_ra_dec'))
         self.target_name_2 = self.target_window.Label(text=self.log.get_param('target_name'))
 
         self.target_window.setup_window([
+            [[self.target_window.Label(text='Simbad connection status: '), 0, 5]],
+            [[self.simbad_status, 0, 5]],
+            [[self.target_window.Button(text='Attempt to reconnect',
+                                        command=[exoclock.reconnect_to_simbad, self.update_ra_dec]), 0, 5]],
             [],
-            [[self.target_window.Label(text='How would you like to choose your target? Select one of the three options:'), 0, 5]],
+            [[self.target_window.Label(
+                text='How would you like to choose your target? Select one of the three options:'
+            ), 0, 5]],
             [],
             [[self.target_ra_dec_choice_0, 1], [self.auto_target_ra_dec, 2, 2]],
             [[self.target_ra_dec_choice_1, 1], [self.simbad_target_name, 2, 2]],
@@ -778,6 +794,8 @@ class DataTargetWindow(MainWindow):
             except:
                 self.target_ra_dec_2.set(self.manual_target_ra_dec.get())
                 self.target_name_2.set(' ')
+
+        self.simbad_status.set(exoclock.get_simbad_status())
 
     def choose_target(self, *event):
 

@@ -9,10 +9,10 @@ import matplotlib
 import webbrowser
 import warnings
 
-from tkinter import Tk, TclError
-from tkinter import Label, Button, Entry, Checkbutton, Scrollbar, Listbox, PhotoImage, Radiobutton, Scale, Frame, Canvas
+from tkinter import Tk
+from tkinter import Label, Button, Entry, Checkbutton, Scrollbar, Listbox, Radiobutton, Scale, Frame
 from tkinter import StringVar, BooleanVar, DoubleVar, IntVar
-from tkinter import DISABLED, NORMAL, END, RIGHT, LEFT, TOP, BOTTOM, BOTH, Y, HORIZONTAL, VERTICAL, E, W, N, S, NW, TRUE, FALSE
+from tkinter import DISABLED, NORMAL, END, RIGHT, LEFT, TOP, BOTTOM, BOTH, Y, HORIZONTAL, VERTICAL, E, W, N, S
 
 from tkinter.ttk import Combobox, Style, Progressbar
 from tkinter.filedialog import askdirectory
@@ -25,11 +25,9 @@ except ImportError:
     NavigationToolbar2Tk = NavigationToolbar2TkAgg
 
 from matplotlib.cm import Greys, Greys_r
-from astropy.io import fits as pf
 
-import hops.pylightcurve41 as plc
-from hops.hops_tools.files import get_fits_data
 from hops.application_log import HOPSLog
+from hops.hops_tools.reduction import mean_std_from_median_mad
 
 
 matplotlib.use('TkAgg')
@@ -875,6 +873,8 @@ class HOPSFitsWindow(HOPSWidget):
         self.mirror_button = Checkbutton(control_frame, text='Mirror', variable=self.mirror, command=self.mirror_fov)
         self.reverse_color_button = Checkbutton(control_frame, text='White Sky', variable=self.white_sky, command=self.reverse_color)
         self.reset_button = Button(control_frame, text='RESET', command=self.reset)
+        self.zoom_in_button = Button(control_frame, text='Zoom +', command=self.zoom_in)
+        self.zoom_out_button = Button(control_frame, text='Zoom -', command=self.zoom_out)
 
         self.info_label.grid(row=1, column=1, columnspan=4)
         self.mouse_data_label.grid(row=2, column=1, columnspan=4)
@@ -888,10 +888,7 @@ class HOPSFitsWindow(HOPSWidget):
         self.flip_button.grid(row=9, column=2)
         self.mirror_button.grid(row=9, column=3)
         self.reverse_color_button.grid(row=9, column=4)
-        self.zoom_in_button = Button(control_frame, text='Zoom +', command=self.zoom_in)
-        self.zoom_out_button = Button(control_frame, text='Zoom -', command=self.zoom_out)
 
-        # Label(control_frame, text=' ').grid(row=10, column=1, columnspan=4)
         Label(control_frame, text='Zoom:').grid(row=10, column=1, columnspan=2)
         self.zoom_out_button.grid(row=10, column=3)
         self.zoom_in_button.grid(row=10, column=4)
@@ -948,7 +945,7 @@ class HOPSFitsWindow(HOPSWidget):
             self.mean = fits_header[self.window.log.mean_key]
             self.std = fits_header[self.window.log.std_key]
         except:
-            self.mean, self.std = plc.mean_std_from_median_mad(fits_data)
+            self.mean, self.std = mean_std_from_median_mad(fits_data)
 
         cutoff = max(np.min(self.data), self.mean + self.window.log.frame_low_std * self.std)
 

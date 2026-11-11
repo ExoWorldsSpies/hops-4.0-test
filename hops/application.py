@@ -6,17 +6,18 @@ import glob
 import datetime
 import traceback
 import webbrowser
-import hops.pylightcurve41 as plc
 
-from .application_log import HOPSLog
-from .application_windows import MainWindow
-from .application_1_data_target import DataTargetWindow
-from .application_2_reduction import ReductionWindow
-from .application_3_inspection import InspectiontWindow
-from .application_4_alignment import AlignmentWindow
-from .application_5_photometry import PhotometryWindow, PhotometryProgressWindow
-from .application_6_fitting import FittingWindow
-from .application_extra_1_observing_planner import ObservingPlannerWindow
+from hops.application_log import HOPSLog
+from hops.application_windows import MainWindow
+from hops.application_1_data_target import DataTargetWindow
+from hops.application_2_reduction import ReductionWindow
+from hops.application_3_inspection import InspectiontWindow
+from hops.application_4_alignment import AlignmentWindow
+from hops.application_5_photometry import PhotometryWindow, PhotometryProgressWindow
+from hops.application_6_fitting import FittingWindow
+from hops.application_extra_1_observing_planner import ObservingPlannerWindow
+
+from hops.hops_tools.files import open_dict, save_dict
 
 
 class HOPS(MainWindow):
@@ -433,7 +434,7 @@ class HOPS(MainWindow):
             if not os.path.isfile(self.log.all_frames_path):
                 self.log.set_param('reduction_complete', False)
             else:
-                all_frames = plc.open_dict(self.log.all_frames_path)
+                all_frames = open_dict(self.log.all_frames_path)
                 for i in all_frames:
                     if not os.path.isfile(os.path.join(self.log.reduction_directory, i)):
                         self.log.set_param('reduction_complete', False)
@@ -447,11 +448,11 @@ class HOPS(MainWindow):
                 self.inspection_complete.set('Files discarded: {0}'.format(trash))
                 self.alignment_button.activate()
 
-                all_frames = plc.open_dict(self.log.all_frames_path)
+                all_frames = open_dict(self.log.all_frames_path)
                 for i in all_frames:
                     if not all_frames[i][self.log.skip_key] and not all_frames[i][self.log.align_x0_key]:
                         self.log.set_param('alignment_complete', False)
-                plc.save_dict(all_frames, self.log.all_frames_path)
+                save_dict(all_frames, self.log.all_frames_path)
 
                 if not os.path.isfile(self.log.all_stars_path):
                     self.log.set_param('alignment_complete', False)
