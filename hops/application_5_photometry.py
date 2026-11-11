@@ -956,7 +956,7 @@ class PhotometryWindow(MainWindow):
         status = exoclock.get_simbad_status()
 
         if 'Connected to ' in status:
-            server = status.replace('Connected to ', '')
+            server = status.replace('Connected to ', '').split()[0]
 
             radec_string = self.log.get_param('target_ra_dec').replace('+', '%2B').replace(' ', '+')
             webbrowser.open("http://{0}/simbad/sim-coo?Coord={1}&CooFrame=ICRS&"
@@ -1060,6 +1060,8 @@ class PhotometryWindow(MainWindow):
             self.fits_figure.ax.text(target_x[0] - 0.4 * dd, target_y[0] - 0.5 * dd,
                                      text, color='r', va='top', ha='left')
             self.fits_figure.ax.add_patch(arrow)
+
+            self.fits_figure.draw()
 
             # for ii in self.plate_solutions[self.science_file]['identified_stars']:
             #     circle = mpatches.Circle((self.plate_solutions[self.science_file]['identified_stars'][ii]['x'] + 0.5,
